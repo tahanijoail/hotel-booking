@@ -6,14 +6,21 @@ use Illuminate\Database\Eloquent\Model;
 
 class Hotel extends Model
 {
-     protected $fillable = [
+    // تحديد الأعمدة القابلة للتعبئة
+    protected $fillable = [
         'name',
         'location',
         'description',
         'number_of_rooms',
         'contacts',
     ];
- // ضبط القيمة الافتراضية للحقل contacts
+
+    // إضافة التخصيصات لتخزين بيانات 'contacts' على شكل مصفوفة (array)
+    protected $casts = [
+        'contacts' => 'array',
+    ];
+
+    // ضبط القيم الافتراضية للحقل contacts عند الإنشاء
     protected static function booted()
     {
         static::creating(function ($hotel) {
@@ -23,6 +30,7 @@ class Hotel extends Model
         });
     }
 
+    // علاقة مع غرف الفندق
     public function rooms()
     {
         return $this->hasMany(Room::class);
