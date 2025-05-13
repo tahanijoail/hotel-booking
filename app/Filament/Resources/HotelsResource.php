@@ -20,11 +20,10 @@ class HotelsResource extends Resource
     protected static ?string $model = Hotel::class;
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $navigationLabel = 'الفنادق';
-    protected static ?string $navigationGroup = 'إدارة الفنادق';
+
 
     /**
-     * تصميم نموذج إنشاء أو تعديل الفندق.
-     *
+
      * @param  \Filament\Forms\Form  $form
      * @return \Filament\Forms\Form
      */

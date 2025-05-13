@@ -15,11 +15,11 @@ return new class extends Migration
             $table->id();
              $table->foreignId('room_id')->constrained('rooms')->onDelete('cascade');
             $table->string('guest_name');
-            $table->json('contact_details'); //  (phone, email, address)
+            $table->json('contact_details')->nullable(); //  (phone, email, address)
             $table->date('check_in');
             $table->date('check_out');
             $table->text('special_requests')->nullable();
-            $table->decimal('total_amount', 8, 2); 
+            $table->decimal('total_amount', 8, 2);
             $table->timestamps();
         });
     }
