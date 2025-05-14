@@ -28,7 +28,7 @@ class RoomResource extends Resource
         return $form
             ->schema([
                 Select::make('hotel_id')
-                    ->label('الفندق')
+                    ->label('اسم الفندق')
                     ->relationship('hotel', 'name')
                     ->searchable()
                     ->required(),

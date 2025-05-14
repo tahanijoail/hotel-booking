@@ -6,6 +6,7 @@ use App\Mail\BookingConfirmation;
 use App\Models\Booking;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Mail;
+use Filament\Notifications\Notification;
 
 class CreateBooking extends CreateRecord
 {
@@ -16,18 +17,23 @@ class CreateBooking extends CreateRecord
         $exists = Booking::where('room_id', $data['room_id'])
             ->where(function ($query) use ($data) {
                 $query->whereBetween('check_in', [$data['check_in'], $data['check_out']])
-                    ->orWhereBetween('check_out', [$data['check_in'], $data['check_out']]);
+                    ->orWhereBetween('check_out', [$data['check_in'], $data['check_out']])
+                    ->orWhere(function ($query) use ($data) {
+                        $query->where('check_in', '<=', $data['check_in'])
+                              ->where('check_out', '>=', $data['check_out']);
+                    });
             })
             ->exists();
 
         if ($exists) {
-            \Filament\Notifications\Notification::make()
+            Notification::make()
                 ->title('الغرفة محجوزة')
                 ->body('لا يمكن الحجز لأن الغرفة محجوزة في هذه الفترة.')
                 ->danger()
+                ->persistent()
                 ->send();
 
-            throw new \Exception('الغرفة محجوزة');
+            $this->halt(); // تمنع إنشاء الحجز بدون كسر الصفحة
         }
 
         return $data;

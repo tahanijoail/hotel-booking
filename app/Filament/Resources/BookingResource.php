@@ -30,11 +30,49 @@ class BookingResource extends Resource
     {
         return $form
             ->schema([
-                Select::make('room_id')
-                    ->relationship('room', 'room_number')
-                    ->label('رقم الغرفة')
+                Select::make('hotel_id')
+                    ->label('اسم الفندق')
+                    ->options(Hotel::all()->pluck('name', 'id'))  // تحميل الفنادق المتاحة
+                    ->reactive()  // لجعل التفاعل مع Livewire
                     ->required()
-                    ->searchable(),
+                    ->afterStateUpdated(function (callable $set) {
+                        $set('room_type', null);  // عند تغيير الفندق، يتم مسح نوع الغرفة
+                        $set('room_id', null);  // مسح الغرفة المختارة
+                    }),
+
+                Select::make('room_type')
+                    ->label('نوع الغرفة')
+                    ->options(function (callable $get) {
+                        $hotelId = $get('hotel_id');
+                        if ($hotelId) {
+                            // إحضار أنواع الغرف المتاحة بناءً على الفندق
+                            return Room::where('hotel_id', $hotelId)
+                                ->distinct()
+                                ->pluck('room_type', 'room_type');
+                        }
+                        return [];
+                    })
+                    ->reactive()  // لجعل التفاعل مع Livewire
+                    ->required()
+                    ->afterStateUpdated(function (callable $set) {
+                        $set('room_id', null);  // عند تغيير نوع الغرفة، يتم مسح الغرفة المختارة
+                    }),
+
+                Select::make('room_id')
+                    ->label('اختار الغرفة')
+                    ->options(function (callable $get) {
+                        $hotelId = $get('hotel_id');
+                        $roomType = $get('room_type');
+                        if ($hotelId && $roomType) {
+                            return Room::where('hotel_id', $hotelId)
+                                ->where('room_type', $roomType) // فلترة حسب نوع الغرفة
+                                ->where('status', 'available')  // الغرف المتاحة فقط
+                                ->pluck('room_number', 'id');
+                        }
+                        return [];
+                    })
+                    ->required()
+                    ->searchable(),  // لجعل الحقل قابلاً للبحث
 
                 TextInput::make('guest_name')
                     ->label('اسم النزيل')
@@ -42,29 +80,13 @@ class BookingResource extends Resource
 
                 Group::make()
                     ->schema([
-                        TextInput::make('contact_details.phone')
-                            ->label('رقم الهاتف')
-                            ->required(),
-                        TextInput::make('contact_details.email')
-                            ->label('البريد الإلكتروني')
-                            ->email()
-                            ->required(),
-                        TextInput::make('contact_details.address')
-                            ->label('العنوان')
-                            ->nullable(),
+                        TextInput::make('contact_details.phone')->label('رقم الهاتف')->required(),
+                        TextInput::make('contact_details.email')->label('البريد الإلكتروني')->email()->required(),
+                        TextInput::make('contact_details.address')->label('العنوان')->nullable(),
                     ])
                     ->columns(1)
-                    ->afterStateHydrated(function ($component, $state) {
-                        if (is_string($state)) {
-                            $decoded = json_decode($state, true);
-                            $component->state(['contact_details' => $decoded ?? []]);
-                        }
-                    })
-                    ->dehydrated(true)
-                    ->dehydrateStateUsing(function ($state) {
-                        return json_encode($state['contact_details'] ?? []);
-                    })
-                    ->label('معلومات الاتصال'),
+                    ->label('معلومات الاتصال')
+                    ->dehydrated(true),
 
                 DatePicker::make('check_in')
                     ->label('تاريخ الوصول')
