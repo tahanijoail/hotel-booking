@@ -32,12 +32,12 @@ class BookingResource extends Resource
             ->schema([
                 Select::make('hotel_id')
                     ->label('اسم الفندق')
-                    ->options(Hotel::all()->pluck('name', 'id'))  // تحميل الفنادق المتاحة
-                    ->reactive()  // لجعل التفاعل مع Livewire
+                    ->options(Hotel::all()->pluck('name', 'id'))  
+                    ->reactive()
                     ->required()
                     ->afterStateUpdated(function (callable $set) {
-                        $set('room_type', null);  // عند تغيير الفندق، يتم مسح نوع الغرفة
-                        $set('room_id', null);  // مسح الغرفة المختارة
+                        $set('room_type', null);
+                        $set('room_id', null);
                     }),
 
                 Select::make('room_type')
@@ -45,17 +45,17 @@ class BookingResource extends Resource
                     ->options(function (callable $get) {
                         $hotelId = $get('hotel_id');
                         if ($hotelId) {
-                            // إحضار أنواع الغرف المتاحة بناءً على الفندق
+
                             return Room::where('hotel_id', $hotelId)
                                 ->distinct()
                                 ->pluck('room_type', 'room_type');
                         }
                         return [];
                     })
-                    ->reactive()  // لجعل التفاعل مع Livewire
+                    ->reactive()
                     ->required()
                     ->afterStateUpdated(function (callable $set) {
-                        $set('room_id', null);  // عند تغيير نوع الغرفة، يتم مسح الغرفة المختارة
+                        $set('room_id', null);
                     }),
 
                 Select::make('room_id')
@@ -65,14 +65,14 @@ class BookingResource extends Resource
                         $roomType = $get('room_type');
                         if ($hotelId && $roomType) {
                             return Room::where('hotel_id', $hotelId)
-                                ->where('room_type', $roomType) // فلترة حسب نوع الغرفة
-                                ->where('status', 'available')  // الغرف المتاحة فقط
+                                ->where('room_type', $roomType)
+                                ->where('status', 'available')
                                 ->pluck('room_number', 'id');
                         }
                         return [];
                     })
                     ->required()
-                    ->searchable(),  // لجعل الحقل قابلاً للبحث
+                    ->searchable(),
 
                 TextInput::make('guest_name')
                     ->label('اسم النزيل')
