@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Hotel extends Model
 {
-    // تحديد الأعمدة القابلة للتعبئة
+    use HasFactory;
     protected $fillable = [
         'name',
         'location',

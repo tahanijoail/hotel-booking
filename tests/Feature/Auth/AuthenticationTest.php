@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Livewire\Volt\Volt as LivewireVolt;
 
 test('login screen can be rendered', function () {
@@ -38,9 +39,14 @@ test('users can not authenticate with invalid password', function () {
 });
 
 test('users can logout', function () {
+     $this->withoutMiddleware(VerifyCsrfToken::class);
     $user = User::factory()->create();
 
-    $response = $this->actingAs($user)->post('/logout');
+    // $response = $this->actingAs($user)->post('/logout');
+
+$response = $this->actingAs($user)->post('/logout', [
+    '_token' => csrf_token(),
+]);
 
     $response->assertRedirect('/');
 
