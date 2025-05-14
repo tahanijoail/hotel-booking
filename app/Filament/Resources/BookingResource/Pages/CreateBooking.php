@@ -33,7 +33,7 @@ class CreateBooking extends CreateRecord
                 ->persistent()
                 ->send();
 
-            $this->halt(); // تمنع إنشاء الحجز بدون كسر الصفحة
+            $this->halt(); 
         }
 
         return $data;

@@ -18,6 +18,9 @@ class HotelFactory extends Factory
     {
         return [
             'name' => $this->faker->company . ' Hotel',
+            'location' => $this->faker->city, // ✅ أضف هذا السطر
+             'description' => $this->faker->paragraph, // ✅ أضف هذا السطر
+             'number_of_rooms' => $this->faker->numberBetween(10, 100), // ✅ أضف هذا السطر
             'contacts' => [
                 'phone' => $this->faker->phoneNumber,
                 'email' => $this->faker->safeEmail,

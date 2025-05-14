@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\BookingResource\Pages;
-use App\Mail\BookingConfirmation;
 use App\Models\Booking;
 use App\Models\Hotel;
 use App\Models\Room;
@@ -19,6 +18,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Carbon\Carbon;
 
 class BookingResource extends Resource
 {
@@ -32,7 +32,7 @@ class BookingResource extends Resource
             ->schema([
                 Select::make('hotel_id')
                     ->label('اسم الفندق')
-                    ->options(Hotel::all()->pluck('name', 'id'))  
+                    ->options(Hotel::all()->pluck('name', 'id'))
                     ->reactive()
                     ->required()
                     ->afterStateUpdated(function (callable $set) {
@@ -45,7 +45,6 @@ class BookingResource extends Resource
                     ->options(function (callable $get) {
                         $hotelId = $get('hotel_id');
                         if ($hotelId) {
-
                             return Room::where('hotel_id', $hotelId)
                                 ->distinct()
                                 ->pluck('room_type', 'room_type');
@@ -72,7 +71,9 @@ class BookingResource extends Resource
                         return [];
                     })
                     ->required()
-                    ->searchable(),
+                    ->searchable()
+                    ->reactive()
+                    ->afterStateUpdated(fn($set, $get) => self::calculateTotal($set, $get)),
 
                 TextInput::make('guest_name')
                     ->label('اسم النزيل')
@@ -80,21 +81,27 @@ class BookingResource extends Resource
 
                 Group::make()
                     ->schema([
-                        TextInput::make('contact_details.phone')->label('رقم الهاتف')->required(),
-                        TextInput::make('contact_details.email')->label('البريد الإلكتروني')->email()->required(),
-                        TextInput::make('contact_details.address')->label('العنوان')->nullable(),
+                        TextInput::make('phone')->label('رقم الهاتف')->required(),
+                        TextInput::make('email')->label('البريد الإلكتروني')->email()->required(),
+                        TextInput::make('address')->label('العنوان')->nullable(),
                     ])
-                    ->columns(1)
+                    ->columns(2)
                     ->label('معلومات الاتصال')
+                    ->statePath('contact_details') // هذا يربط الحقول مباشرة بمفتاح JSON
                     ->dehydrated(true),
+
 
                 DatePicker::make('check_in')
                     ->label('تاريخ الوصول')
-                    ->required(),
+                    ->required()
+                    ->reactive()
+                    ->afterStateUpdated(fn($set, $get) => self::calculateTotal($set, $get)),
 
                 DatePicker::make('check_out')
                     ->label('تاريخ المغادرة')
-                    ->required(),
+                    ->required()
+                    ->reactive()
+                    ->afterStateUpdated(fn($set, $get) => self::calculateTotal($set, $get)),
 
                 Textarea::make('special_requests')
                     ->label('طلبات خاصة')
@@ -103,7 +110,11 @@ class BookingResource extends Resource
                 TextInput::make('total_amount')
                     ->label('المبلغ الإجمالي')
                     ->numeric()
-                    ->required(),
+                    ->disabled()
+                    ->dehydrated()
+                    ->required()
+                    ->reactive()
+                    ->afterStateHydrated(fn($set, $get) => self::calculateTotal($set, $get)),
             ])
             ->columns(2);
     }
@@ -155,5 +166,27 @@ class BookingResource extends Resource
             'create' => Pages\CreateBooking::route('/create'),
             'edit' => Pages\EditBooking::route('/{record}/edit'),
         ];
+    }
+
+    public static function calculateTotal($set, $get): void
+    {
+        $roomId = $get('room_id');
+        $checkIn = $get('check_in');
+        $checkOut = $get('check_out');
+
+        if ($roomId && $checkIn && $checkOut) {
+            $room = Room::find($roomId);
+            if ($room) {
+                $start = Carbon::parse($checkIn);
+                $end = Carbon::parse($checkOut);
+                $days = $end->diffInDays($start);
+                $total = $room->price_per_night * max(1, $days); // لا يكون صفر حتى لو يوم واحد
+                $set('total_amount', $total);
+            } else {
+                $set('total_amount', null);
+            }
+        } else {
+            $set('total_amount', null);
+        }
     }
 }

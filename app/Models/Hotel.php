@@ -16,7 +16,7 @@ class Hotel extends Model
         'contacts',
     ];
 
-    // إضافة التخصيصات لتخزين بيانات 'contacts' على شكل مصفوفة (array)
+
     protected $casts = [
         'contacts' => 'array',
     ];
@@ -26,12 +26,12 @@ class Hotel extends Model
     {
         static::creating(function ($hotel) {
             if (empty($hotel->contacts)) {
-                $hotel->contacts = []; // تعيين مصفوفة فارغة إذا كانت contacts فارغة
+                $hotel->contacts = [];
             }
         });
     }
 
-    // علاقة مع غرف الفندق
+ 
     public function rooms()
     {
         return $this->hasMany(Room::class);

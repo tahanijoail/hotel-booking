@@ -29,7 +29,7 @@ test('يمكن إنشاء حجز لغرفة متاحة', function () {
 
     $response = $this->post('/bookings', $data);
 
-    $response->assertStatus(302); 
+    $response->assertStatus(302);
     $this->assertDatabaseHas('bookings', [
         'guest_name' => 'أحمد محمد',
         'room_id' => $room->id,
